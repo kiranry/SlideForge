@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { ListCardsSkeleton } from "@/components/loading-states";
 import { validateCustomPalette } from "@/lib/contrast";
 import { defaultBrandKit, type BrandKit } from "@/lib/brand-kit";
 import {
@@ -33,8 +35,9 @@ function normalizeHex(v: string): string {
 }
 
 export default function BrandKitsPage() {
-  const [kits, setKits] = useState<BrandKit[]>([]);
+  const [kits, setKits] = useState<BrandKit[] | null>(null);
   const [editing, setEditing] = useState<BrandKit | null>(null);
+  const [logoLoading, setLogoLoading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -84,9 +87,12 @@ export default function BrandKitsPage() {
       toast.error("Logo must be under 2 MB.");
       return;
     }
+    setLogoLoading(true);
     const reader = new FileReader();
     reader.onload = () =>
       patchEditing({ logoDataUrl: reader.result as string });
+    reader.onerror = () => toast.error("Could not read logo file.");
+    reader.onloadend = () => setLogoLoading(false);
     reader.readAsDataURL(file);
   };
 
@@ -109,14 +115,17 @@ export default function BrandKitsPage() {
           </Button>
         </header>
 
-        {kits.length === 0 && !editing && (
+        {kits === null ? (
+          <ListCardsSkeleton count={3} />
+        ) : kits.length === 0 && !editing ? (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
               No brand kits yet. Create one to standardize your decks.
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
+        {kits !== null && kits.length > 0 ? (
         <ul className="mb-8 space-y-3">
           {kits.map((kit) => (
             <li
@@ -159,6 +168,7 @@ export default function BrandKitsPage() {
             </li>
           ))}
         </ul>
+        ) : null}
 
         {editing && (
           <Card>
@@ -268,9 +278,16 @@ export default function BrandKitsPage() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    disabled={logoLoading}
                     onClick={() => logoInputRef.current?.click()}
                   >
-                    Upload logo
+                    {logoLoading ? (
+                      <>
+                        <Spinner size="sm" /> Uploading…
+                      </>
+                    ) : (
+                      "Upload logo"
+                    )}
                   </Button>
                   {editing.logoDataUrl && (
                     <Button

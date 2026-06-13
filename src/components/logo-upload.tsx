@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { ImageIcon, X } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useBuilderStore } from "@/lib/store";
@@ -12,6 +13,7 @@ const MAX_BYTES = 2 * 1024 * 1024;
 export function LogoUpload() {
   const store = useBuilderStore();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [processing, setProcessing] = useState(false);
 
   const handleFile = (file: File | undefined) => {
     if (!file) return;
@@ -23,18 +25,25 @@ export function LogoUpload() {
       alert("Use PNG, JPEG, or SVG.");
       return;
     }
+    setProcessing(true);
     const reader = new FileReader();
     reader.onload = async () => {
       const dataUrl = reader.result as string;
-      if (isSvgDataUrl(dataUrl)) {
-        try {
+      try {
+        if (isSvgDataUrl(dataUrl)) {
           store.setLogoDataUrl(await rasterizeSvgToPng(dataUrl));
-        } catch {
-          alert("Could not process SVG logo. Try PNG or JPEG.");
+        } else {
+          store.setLogoDataUrl(dataUrl);
         }
-      } else {
-        store.setLogoDataUrl(dataUrl);
+      } catch {
+        alert("Could not process SVG logo. Try PNG or JPEG.");
+      } finally {
+        setProcessing(false);
       }
+    };
+    reader.onerror = () => {
+      alert("Could not read logo file.");
+      setProcessing(false);
     };
     reader.readAsDataURL(file);
   };
@@ -76,9 +85,18 @@ export function LogoUpload() {
           type="button"
           variant="outline"
           size="sm"
+          disabled={processing}
           onClick={() => inputRef.current?.click()}
         >
-          <ImageIcon className="mr-2 h-4 w-4" /> Upload logo
+          {processing ? (
+            <>
+              <Spinner size="sm" /> Processing…
+            </>
+          ) : (
+            <>
+              <ImageIcon className="mr-2 h-4 w-4" /> Upload logo
+            </>
+          )}
         </Button>
       )}
       {store.logoDataUrl && (

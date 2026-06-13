@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Spinner } from "@/components/ui/spinner";
+import { TemplateGridSkeleton } from "@/components/loading-states";
 import { DECK_TEMPLATES } from "@/lib/templates";
 import { saveDeck } from "@/lib/storage";
 import {
@@ -35,7 +37,8 @@ function kindLabel(kind: SavedDeckTemplate["kind"]): string {
 export default function TemplatesPage() {
   const router = useRouter();
   const store = useBuilderStore();
-  const [myTemplates, setMyTemplates] = useState<SavedDeckTemplate[]>([]);
+  const [myTemplates, setMyTemplates] = useState<SavedDeckTemplate[] | null>(null);
+  const [openingSkeletonId, setOpeningSkeletonId] = useState<string | null>(null);
 
   useEffect(() => {
     setMyTemplates(listTemplates());
@@ -57,15 +60,20 @@ export default function TemplatesPage() {
       toast.error("Template has no manifest.");
       return;
     }
-    const id = uuidv4();
-    await saveDeck({
-      id,
-      createdAt: new Date().toISOString(),
-      mode: "description",
-      manifest: template.skeletonManifest,
-      suppressedAnomalyIds: [],
-    });
-    router.push(`/preview/${id}`);
+    setOpeningSkeletonId(template.id);
+    try {
+      const id = uuidv4();
+      await saveDeck({
+        id,
+        createdAt: new Date().toISOString(),
+        mode: "description",
+        manifest: template.skeletonManifest,
+        suppressedAnomalyIds: [],
+      });
+      router.push(`/preview/${id}`);
+    } finally {
+      setOpeningSkeletonId(null);
+    }
   };
 
   const removeTemplate = (id: string) => {
@@ -139,7 +147,9 @@ export default function TemplatesPage() {
           </TabsContent>
 
           <TabsContent value="mine" className="mt-6">
-            {myTemplates.length === 0 ? (
+            {myTemplates === null ? (
+              <TemplateGridSkeleton count={2} />
+            ) : myTemplates.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border p-10 text-center">
                 <p className="text-muted-foreground">
                   No saved templates yet. Open a deck in preview or export and
@@ -175,9 +185,16 @@ export default function TemplatesPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={openingSkeletonId === t.id}
                           onClick={() => openSkeleton(t)}
                         >
-                          Open skeleton
+                          {openingSkeletonId === t.id ? (
+                            <>
+                              <Spinner size="sm" /> Opening…
+                            </>
+                          ) : (
+                            "Open skeleton"
+                          )}
                         </Button>
                       )}
                       <Button

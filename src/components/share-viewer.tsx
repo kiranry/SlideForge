@@ -8,9 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Loader2,
   MessageSquare,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -178,7 +178,7 @@ export function ShareViewer({
               onClick={() => downloadPptx.mutate()}
             >
               {downloadPptx.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner size="sm" />
               ) : (
                 <Download className="mr-2 h-4 w-4" />
               )}
@@ -275,7 +275,7 @@ export function ShareViewer({
             onClick={() => postComment.mutate()}
           >
             {postComment.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Spinner size="sm" />
             ) : null}
             Post comment
           </Button>

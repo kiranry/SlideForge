@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Shuffle, Loader2 } from "lucide-react";
+import { Shuffle } from "lucide-react";
+import { LoadingOverlay } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +21,7 @@ import {
   mergeRemixWithLockedSlides,
 } from "@/lib/slide-assembly";
 import type { SlideManifest, StoredDeck } from "@/lib/types";
+import { useBusyPhase } from "@/lib/use-instant-pending";
 
 const PRESETS: {
   target: "executive_summary" | "technical_deep_dive" | "sales_pitch";
@@ -51,6 +53,8 @@ interface RemixDialogProps {
 export function RemixDialog({ deck, compact = false }: RemixDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [statusLabel, setStatusLabel] = useState("Remixing deck…");
+  const { busy, start, redirect, reset } = useBusyPhase();
 
   const remix = useMutation({
     mutationFn: async (
@@ -69,6 +73,7 @@ export function RemixDialog({ deck, compact = false }: RemixDialogProps) {
       return manifest;
     },
     onSuccess: async (manifest) => {
+      setStatusLabel("Saving deck…");
       const merged = mergeRemixWithLockedSlides(deck.manifest, manifest);
       const newId = uuidv4();
       await saveDeck({
@@ -77,17 +82,31 @@ export function RemixDialog({ deck, compact = false }: RemixDialogProps) {
         createdAt: new Date().toISOString(),
         manifest: merged,
       });
-      toast.success("Remixed deck created");
+      setStatusLabel("Opening preview…");
+      redirect();
       setOpen(false);
       router.push(`/preview/${newId}`);
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => {
+      reset();
+      toast.error(err.message);
+    },
   });
+
+  const runRemix = (
+    target: "executive_summary" | "technical_deep_dive" | "sales_pitch"
+  ) => {
+    start();
+    setStatusLabel("Remixing deck…");
+    remix.mutate(target);
+  };
 
   const lockedCount = countLockedSlides(deck.manifest.slides);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      <LoadingOverlay open={busy} label={statusLabel} />
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {compact ? (
           <Button
@@ -123,8 +142,8 @@ export function RemixDialog({ deck, compact = false }: RemixDialogProps) {
             <button
               key={p.target}
               type="button"
-              disabled={remix.isPending}
-              onClick={() => remix.mutate(p.target)}
+              disabled={busy || remix.isPending}
+              onClick={() => runRemix(p.target)}
               className="flex w-full flex-col rounded-lg border border-border p-3 text-left transition-colors hover:border-primary hover:bg-muted/40 disabled:opacity-50"
             >
               <span className="font-medium">{p.label}</span>
@@ -132,12 +151,8 @@ export function RemixDialog({ deck, compact = false }: RemixDialogProps) {
             </button>
           ))}
         </div>
-        {remix.isPending && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Remixing…
-          </div>
-        )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }

@@ -3,7 +3,9 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ImagePlus, Loader2, RefreshCw, Sparkles, Trash2 } from "lucide-react";
+import { ImagePlus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +46,7 @@ export function SlideMediaPanel({
     : "font-mono text-xs uppercase tracking-wider text-muted-foreground";
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [imagePrompt, setImagePrompt] = useState("");
+  const [compressing, setCompressing] = useState(false);
 
   const replacingAi = slide.image?.source === "ai";
 
@@ -91,12 +94,15 @@ export function SlideMediaPanel({
       return;
     }
     try {
+      setCompressing(true);
       const dataUrl = await compressImageFile(file);
       applyImage(dataUrl, slide.image?.placement ?? "right", "upload");
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Could not add image."
       );
+    } finally {
+      setCompressing(false);
     }
   };
 
@@ -231,7 +237,7 @@ export function SlideMediaPanel({
             onClick={() => runGenerate()}
           >
             {generateImage.isPending ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              <Spinner size="sm" className="gap-0" />
             ) : (
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
             )}
@@ -241,8 +247,14 @@ export function SlideMediaPanel({
         <p className="text-[11px] leading-snug text-muted-foreground">
           {replacingAi && "Regenerating replaces this slide's AI image. "}
           {!embedded &&
-            (imageStatus.data?.hint ??
-              "Free Google keys cannot generate images — add HUGGINGFACE_API_KEY or upload a file.")}
+            (imageStatus.isLoading ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Skeleton className="inline-block h-3 w-48" />
+              </span>
+            ) : (
+              imageStatus.data?.hint ??
+              "Free Google keys cannot generate images — add HUGGINGFACE_API_KEY or upload a file."
+            ))}
         </p>
       </div>
 
@@ -292,7 +304,7 @@ export function SlideMediaPanel({
                   }
                 >
                   {generateImage.isPending ? (
-                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                    <Spinner size="sm" className="gap-0" />
                   ) : (
                     <RefreshCw className="mr-1 h-3.5 w-3.5" />
                   )}
@@ -318,9 +330,18 @@ export function SlideMediaPanel({
               type="button"
               variant="outline"
               size="sm"
+              disabled={compressing}
               onClick={() => imageInputRef.current?.click()}
             >
-              <ImagePlus className="mr-1.5 h-3.5 w-3.5" /> Upload image
+              {compressing ? (
+                <>
+                  <Spinner size="sm" className="gap-0" /> Compressing…
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="mr-1.5 h-3.5 w-3.5" /> Upload image
+                </>
+              )}
             </Button>
           </div>
         )}

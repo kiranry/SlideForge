@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { RefreshCw, Loader2 } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -133,7 +134,7 @@ export function RegenerateSlideDialog({
           >
             {regenerate.isPending ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Regenerating…
+                <Spinner size="sm" /> Regenerating…
               </>
             ) : (
               "Regenerate slide"

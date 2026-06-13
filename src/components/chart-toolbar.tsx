@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Sparkles, Wand2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -152,7 +153,7 @@ export function ChartToolbar({
           onClick={() => suggestChart.mutate()}
         >
           {suggestChart.isPending ? (
-            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            <Spinner size="sm" className="gap-0" />
           ) : (
             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
           )}
@@ -361,7 +362,7 @@ export function ChartToolbar({
           onClick={() => editChart.mutate(editInstruction.trim())}
         >
           {editChart.isPending ? (
-            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            <Spinner size="sm" className="gap-0" />
           ) : (
             <Wand2 className="mr-1.5 h-3.5 w-3.5" />
           )}

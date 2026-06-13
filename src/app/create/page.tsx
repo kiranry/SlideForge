@@ -1,9 +1,11 @@
 import { SiteHeader } from "@/components/site-header";
 import { BuilderForm } from "@/components/builder-form";
+import { DevWarmup } from "@/components/dev-warmup";
 
 export default function CreatePage() {
   return (
     <div className="flex min-h-screen flex-col">
+      <DevWarmup />
       <SiteHeader />
       <main className="w-full flex-1 px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-8">
