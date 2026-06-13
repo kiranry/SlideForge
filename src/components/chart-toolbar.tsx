@@ -46,9 +46,16 @@ interface ChartToolbarProps {
   slide: Slide;
   data?: ParsedData | null;
   onSlideChange: (slide: Slide) => void;
+  /** Narrow sidebar layout — stack controls full width. */
+  embedded?: boolean;
 }
 
-export function ChartToolbar({ slide, data, onSlideChange }: ChartToolbarProps) {
+export function ChartToolbar({
+  slide,
+  data,
+  onSlideChange,
+  embedded = false,
+}: ChartToolbarProps) {
   const [pendingSuggestion, setPendingSuggestion] = useState<{
     suggestion: ChartSuggestion;
     chart: ChartSpec;
@@ -128,22 +135,18 @@ export function ChartToolbar({ slide, data, onSlideChange }: ChartToolbarProps) 
     toast.success("Chart suggestion applied");
   };
 
+  const settingsGridClass = embedded
+    ? "grid gap-3"
+    : "grid gap-3 sm:grid-cols-2 lg:grid-cols-4";
+
   return (
-    <fieldset
-      className="rounded-lg border border-border bg-muted/30 p-3"
-      aria-labelledby="chart-toolbar-legend"
-    >
-      <legend
-        id="chart-toolbar-legend"
-        className="mb-2 px-1 text-xs font-medium text-muted-foreground"
-      >
-        Chart type, axes, and AI tools
-      </legend>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+    <div className={embedded ? "space-y-4" : "space-y-3"}>
+      <div className="space-y-2">
         <Button
           type="button"
           variant="outline"
           size="sm"
+          className={embedded ? "w-full" : undefined}
           disabled={suggestChart.isPending}
           aria-label="AI suggest chart type and axes"
           onClick={() => suggestChart.mutate()}
@@ -155,191 +158,204 @@ export function ChartToolbar({ slide, data, onSlideChange }: ChartToolbarProps) 
           )}
           AI suggest chart
         </Button>
-      </div>
 
-      {pendingSuggestion && (
-        <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 p-3">
-          <p className="text-sm text-foreground">{pendingSuggestion.suggestion.rationale}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Suggest{" "}
-            <span className="font-medium capitalize">
-              {chartTypeLabel(pendingSuggestion.suggestion.chart_type)}
-            </span>
-            {" — "}
-            {pendingSuggestion.suggestion.y_col} by {pendingSuggestion.suggestion.x_col}
-            {" on "}
-            {pendingSuggestion.suggestion.sheet}
-          </p>
-          <div className="mt-2 flex gap-2">
-            <Button type="button" size="sm" onClick={applySuggestion}>
-              Apply suggestion
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => setPendingSuggestion(null)}
-            >
-              Dismiss
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {!pendingSuggestion && chart.ai_rationale && (
-        <p className="mb-3 text-xs italic text-muted-foreground">
-          AI: {chart.ai_rationale}
-        </p>
-      )}
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <Label id="chart-type-label" className="mb-1 block text-xs">
-            Chart type
-          </Label>
-          <Select
-            value={chart.type}
-            onValueChange={(v) => patchChart({ type: v as ChartType })}
-          >
-            <SelectTrigger className="h-9" aria-labelledby="chart-type-label">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CHART_TYPES.map((t) => (
-                <SelectItem key={t} value={t} disabled={!allowed.includes(t)}>
-                  {chartTypeLabel(t)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label id="chart-sheet-label" className="mb-1 block text-xs">
-            Sheet
-          </Label>
-          <Select
-            value={chart.data_ref ?? sheet.name}
-            onValueChange={(v) => patchChart({ data_ref: v })}
-          >
-            <SelectTrigger className="h-9" aria-labelledby="chart-sheet-label">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {data.sheets.map((s) => (
-                <SelectItem key={s.name} value={s.name}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label id="chart-x-label" className="mb-1 block text-xs">
-            X axis (category)
-          </Label>
-          {allCols.length ? (
-            <Select
-              value={coerceSelectValue(chart.x_col, allCols)!}
-              onValueChange={(v) => patchChart({ x_col: v })}
-            >
-              <SelectTrigger className="h-9" aria-labelledby="chart-x-label">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {allCols.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <p className="text-xs text-muted-foreground">No columns in sheet.</p>
-          )}
-        </div>
-
-        {(chart.type === "bar" || chart.type === "combo") && (
-          <div>
-            <Label id="chart-bar-layout-label" className="mb-1 block text-xs">
-              Bar layout
-            </Label>
-            <Select
-              value={chart.stacked ? "stacked" : "grouped"}
-              onValueChange={(v) =>
-                patchChart({
-                  stacked: v === "stacked",
-                  grouped: v === "grouped",
-                })
-              }
-            >
-              <SelectTrigger
-                className="h-9"
-                aria-labelledby="chart-bar-layout-label"
+        {pendingSuggestion && (
+          <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
+            <p className="text-sm leading-snug text-foreground">
+              {pendingSuggestion.suggestion.rationale}
+            </p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Suggest{" "}
+              <span className="font-medium capitalize">
+                {chartTypeLabel(pendingSuggestion.suggestion.chart_type)}
+              </span>
+              {" — "}
+              {pendingSuggestion.suggestion.y_col} by{" "}
+              {pendingSuggestion.suggestion.x_col}
+              {" on "}
+              {pendingSuggestion.suggestion.sheet}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button type="button" size="sm" onClick={applySuggestion}>
+                Apply suggestion
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setPendingSuggestion(null)}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="grouped">Grouped (side by side)</SelectItem>
-                <SelectItem value="stacked">Stacked</SelectItem>
-              </SelectContent>
-            </Select>
+                Dismiss
+              </Button>
+            </div>
           </div>
         )}
 
-        <div>
-          <Label id="chart-y-label" className="mb-1 block text-xs">
-            Y axis (values)
-          </Label>
-          {nums.length ? (
+        {!pendingSuggestion && chart.ai_rationale && (
+          <p className="rounded-md bg-muted/40 px-2.5 py-2 text-xs leading-relaxed text-muted-foreground">
+            {chart.ai_rationale}
+          </p>
+        )}
+      </div>
+
+      <div
+        className={
+          embedded
+            ? "space-y-3 rounded-md border border-border/70 bg-background/60 p-3"
+            : "rounded-lg border border-border bg-muted/30 p-3"
+        }
+      >
+        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          Chart settings
+        </p>
+
+        <div className={settingsGridClass}>
+          <div className="min-w-0">
+            <Label id="chart-type-label" className="mb-1.5 block text-xs">
+              Chart type
+            </Label>
             <Select
-              value={coerceSelectValue(chart.y_cols?.[0], nums)!}
-              onValueChange={(v) => patchChart({ y_cols: [v] })}
+              value={chart.type}
+              onValueChange={(v) => patchChart({ type: v as ChartType })}
             >
-              <SelectTrigger className="h-9" aria-labelledby="chart-y-label">
+              <SelectTrigger className="h-9 w-full" aria-labelledby="chart-type-label">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {nums.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
+                {CHART_TYPES.map((t) => (
+                  <SelectItem key={t} value={t} disabled={!allowed.includes(t)}>
+                    {chartTypeLabel(t)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              No numeric columns — upload data with numbers for the Y axis.
-            </p>
+          </div>
+
+          <div className="min-w-0">
+            <Label id="chart-sheet-label" className="mb-1.5 block text-xs">
+              Sheet
+            </Label>
+            <Select
+              value={chart.data_ref ?? sheet.name}
+              onValueChange={(v) => patchChart({ data_ref: v })}
+            >
+              <SelectTrigger className="h-9 w-full" aria-labelledby="chart-sheet-label">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {data.sheets.map((s) => (
+                  <SelectItem key={s.name} value={s.name}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="min-w-0">
+            <Label id="chart-x-label" className="mb-1.5 block text-xs">
+              X axis (category)
+            </Label>
+            {allCols.length ? (
+              <Select
+                value={coerceSelectValue(chart.x_col, allCols)!}
+                onValueChange={(v) => patchChart({ x_col: v })}
+              >
+                <SelectTrigger className="h-9 w-full" aria-labelledby="chart-x-label">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {allCols.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-xs text-muted-foreground">No columns in sheet.</p>
+            )}
+          </div>
+
+          {(chart.type === "bar" || chart.type === "combo") && (
+            <div className="min-w-0">
+              <Label id="chart-bar-layout-label" className="mb-1.5 block text-xs">
+                Bar layout
+              </Label>
+              <Select
+                value={chart.stacked ? "stacked" : "grouped"}
+                onValueChange={(v) =>
+                  patchChart({
+                    stacked: v === "stacked",
+                    grouped: v === "grouped",
+                  })
+                }
+              >
+                <SelectTrigger
+                  className="h-9 w-full"
+                  aria-labelledby="chart-bar-layout-label"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="grouped">Grouped (side by side)</SelectItem>
+                  <SelectItem value="stacked">Stacked</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           )}
+
+          <div className="min-w-0">
+            <Label id="chart-y-label" className="mb-1.5 block text-xs">
+              Y axis (values)
+            </Label>
+            {nums.length ? (
+              <Select
+                value={coerceSelectValue(chart.y_cols?.[0], nums)!}
+                onValueChange={(v) => patchChart({ y_cols: [v] })}
+              >
+                <SelectTrigger className="h-9 w-full" aria-labelledby="chart-y-label">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {nums.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                No numeric columns — upload data with numbers for the Y axis.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
-        <div className="min-w-0 flex-1">
-          <Label id="chart-edit-label" className="mb-1 block text-xs">
-            Describe a chart change
-          </Label>
-          <Input
-            id="chart-edit-input"
-            value={editInstruction}
-            onChange={(e) => setEditInstruction(e.target.value)}
-            placeholder='e.g. "switch to a line chart" or "plot revenue by month"'
-            className="h-9"
-            aria-labelledby="chart-edit-label"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && editInstruction.trim()) {
-                editChart.mutate(editInstruction.trim());
-              }
-            }}
-          />
-        </div>
+      <div className="space-y-2">
+        <Label id="chart-edit-label" className="block text-xs">
+          Describe a chart change
+        </Label>
+        <Input
+          id="chart-edit-input"
+          value={editInstruction}
+          onChange={(e) => setEditInstruction(e.target.value)}
+          placeholder='e.g. "switch to a line chart" or "plot revenue by month"'
+          className="h-9"
+          aria-labelledby="chart-edit-label"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && editInstruction.trim()) {
+              editChart.mutate(editInstruction.trim());
+            }
+          }}
+        />
         <Button
           type="button"
           variant="secondary"
           size="sm"
-          className="shrink-0"
+          className={embedded ? "w-full" : "shrink-0"}
           disabled={!editInstruction.trim() || editChart.isPending}
           aria-label="Apply natural language chart fix"
           onClick={() => editChart.mutate(editInstruction.trim())}
@@ -353,10 +369,12 @@ export function ChartToolbar({ slide, data, onSlideChange }: ChartToolbarProps) 
         </Button>
       </div>
 
-      <p className="mt-2 text-xs text-muted-foreground">
-        Manual changes and AI suggestions update the preview and exported PowerPoint immediately.
-        Use Tab to move between controls; Enter applies a chart fix from the text field.
-      </p>
-    </fieldset>
+      {!embedded && (
+        <p className="text-xs text-muted-foreground">
+          Manual changes and AI suggestions update the preview and exported PowerPoint
+          immediately.
+        </p>
+      )}
+    </div>
   );
 }

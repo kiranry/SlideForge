@@ -17,18 +17,13 @@ import {
 import { compressImageFile } from "@/lib/compress-image";
 import { clearElementBox } from "@/lib/element-boxes";
 import { removeSlideImageFromStore } from "@/lib/deck-media";
-import {
-  IMAGE_PRESETS,
-  MAX_AI_IMAGES_PER_DECK,
-  countAiSlideImages,
-} from "@/lib/slide-images";
-import type { Slide, SlideImage, SlideManifest } from "@/lib/types";
+import { IMAGE_PRESETS } from "@/lib/slide-images";
+import type { Slide, SlideImage } from "@/lib/types";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 interface SlideMediaPanelProps {
   slide: Slide;
-  manifest: SlideManifest;
   deckId: string;
   onSlideChange: (slide: Slide) => void;
   embedded?: boolean;
@@ -37,7 +32,6 @@ interface SlideMediaPanelProps {
 /** Per-slide image upload, AI generation, and placement (Phase 6). */
 export function SlideMediaPanel({
   slide,
-  manifest,
   deckId,
   onSlideChange,
   embedded = false,
@@ -51,8 +45,6 @@ export function SlideMediaPanel({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [imagePrompt, setImagePrompt] = useState("");
 
-  const aiImageCount = countAiSlideImages(manifest);
-  const aiSlotsLeft = MAX_AI_IMAGES_PER_DECK - aiImageCount;
   const replacingAi = slide.image?.source === "ai";
 
   const imageStatus = useQuery({
@@ -115,7 +107,6 @@ export function SlideMediaPanel({
       aspectRatio?: "16:9" | "1:1" | "4:3";
       placement?: SlideImage["placement"];
     }) => {
-      const effectiveCount = replacingAi ? aiImageCount - 1 : aiImageCount;
       const res = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,7 +116,6 @@ export function SlideMediaPanel({
           slideBody: slide.body,
           preset: opts.preset,
           aspectRatio: opts.aspectRatio,
-          aiImageCount: effectiveCount,
         }),
       });
       if (!res.ok) {
@@ -157,9 +147,7 @@ export function SlideMediaPanel({
   });
 
   const aiGenerateDisabled =
-    generateImage.isPending ||
-    (!replacingAi && aiSlotsLeft <= 0) ||
-    imageStatus.data?.available === false;
+    generateImage.isPending || imageStatus.data?.available === false;
 
   const removeImage = async () => {
     if (slide.image) {
@@ -251,9 +239,7 @@ export function SlideMediaPanel({
           </Button>
         </div>
         <p className="text-[11px] leading-snug text-muted-foreground">
-          {replacingAi
-            ? "Regenerating replaces this slide's AI image."
-            : `${aiSlotsLeft}/${MAX_AI_IMAGES_PER_DECK} AI slots left.`}{" "}
+          {replacingAi && "Regenerating replaces this slide's AI image. "}
           {!embedded &&
             (imageStatus.data?.hint ??
               "Free Google keys cannot generate images — add HUGGINGFACE_API_KEY or upload a file.")}

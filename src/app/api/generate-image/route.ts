@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { generateImageDataUrl } from "@/lib/ai/generate-image";
 import { env } from "@/lib/env";
-import { buildImagePrompt, MAX_AI_IMAGES_PER_DECK } from "@/lib/slide-images";
+import { buildImagePrompt } from "@/lib/slide-images";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -13,7 +13,6 @@ const requestSchema = z.object({
   slideBody: z.array(z.string()).optional(),
   preset: z.enum(["hero", "illustration", "photo"]).optional(),
   aspectRatio: z.enum(["16:9", "1:1", "4:3"]).optional(),
-  aiImageCount: z.number().int().min(0),
 });
 
 export async function POST(req: NextRequest) {
@@ -24,15 +23,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: `Invalid request: ${(e as Error).message}` },
       { status: 400 }
-    );
-  }
-
-  if (input.aiImageCount >= MAX_AI_IMAGES_PER_DECK) {
-    return NextResponse.json(
-      {
-        error: `This deck already has ${MAX_AI_IMAGES_PER_DECK} AI-generated images. Remove one or upload a file instead.`,
-      },
-      { status: 429 }
     );
   }
 

@@ -42,7 +42,7 @@ interface BuilderState {
   bodyFont: string;
   chartColors: string[] | null;
 
-  /** Auto-generate AI images for key slides after outline (up to 3). */
+  /** Auto-generate AI images for eligible slides after outline. */
   autoGenerateImages: boolean;
   /** Synthesize chart data when no file was uploaded. */
   autoGenerateChartData: boolean;

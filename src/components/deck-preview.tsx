@@ -442,12 +442,14 @@ export function DeckPreview({ id }: { id: string }) {
     <div className="flex h-full min-h-0 w-full touch-manipulation flex-col xl:flex-row">
       {/* Slide filmstrip — left rail on desktop */}
       <aside
-        className="hidden shrink-0 border-b border-border bg-muted/20 xl:flex xl:w-[108px] xl:flex-col xl:border-b-0 xl:border-r"
+        className="hidden shrink-0 border-b border-border bg-muted/20 xl:flex xl:w-[200px] xl:flex-col xl:border-b-0 xl:border-r"
       >
         <p className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
           Slides
         </p>
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 pb-2">
+        <div
+          className="min-h-0 flex-1 overflow-y-auto px-2.5 pb-2.5 pr-3 [scrollbar-gutter:stable]"
+        >
           <SlideFilmstrip
             vertical
             slides={slides}
@@ -584,6 +586,29 @@ export function DeckPreview({ id }: { id: string }) {
           </div>
         </div>
 
+        <div className="shrink-0 border-t border-border bg-muted/10 px-3 py-2 sm:px-4">
+          <label
+            htmlFor="speaker-notes"
+            className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+          >
+            Speaker notes
+          </label>
+          <Textarea
+            id="speaker-notes"
+            aria-label="Speaker notes for this slide"
+            value={slide.speaker_notes ?? ""}
+            onChange={(e) => {
+              const notes = e.target.value;
+              const updated = { ...slide, speaker_notes: notes };
+              setLocalSlide(updated);
+              debouncedReplaceSlide(current, updated);
+            }}
+            placeholder="Presenter notes…"
+            rows={2}
+            className="h-16 min-h-0 resize-none overflow-y-auto text-sm"
+          />
+        </div>
+
         <footer
           className="flex shrink-0 items-center justify-between gap-2 border-t border-border px-3 py-2 sm:px-4"
         >
@@ -663,7 +688,6 @@ export function DeckPreview({ id }: { id: string }) {
           <SlideMediaPanel
             embedded
             slide={slide}
-            manifest={manifest}
             deckId={id}
             onSlideChange={handleSlideChange}
           />
@@ -684,28 +708,6 @@ export function DeckPreview({ id }: { id: string }) {
               lockChart={slide.type === "chart"}
             />
           )}
-
-          <div className="border-b border-border px-4 py-3">
-            <label
-              htmlFor="speaker-notes"
-              className="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
-            >
-              Speaker notes
-            </label>
-            <Textarea
-              id="speaker-notes"
-              aria-label="Speaker notes for this slide"
-              value={slide.speaker_notes ?? ""}
-              onChange={(e) => {
-                const notes = e.target.value;
-                const updated = { ...slide, speaker_notes: notes };
-                setLocalSlide(updated);
-                debouncedReplaceSlide(current, updated);
-              }}
-              placeholder="Presenter notes…"
-              className="min-h-[72px] resize-y text-sm"
-            />
-          </div>
 
           {deck.data && deck.anomalyFlags && deck.anomalyFlags.length > 0 && (
             <div className="border-b border-border px-4 py-3">

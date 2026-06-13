@@ -55,7 +55,7 @@ export function ChartControlsPanel({
   embedded = false,
 }: ChartControlsPanelProps) {
   const shell = embedded
-    ? "border-b border-border px-4 py-3 space-y-2"
+    ? "border-b border-border px-4 py-3 space-y-3"
     : "mt-4 space-y-3 rounded-lg border border-border bg-muted/20 p-4";
   const labelClass = embedded
     ? "text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
@@ -241,7 +241,12 @@ export function ChartControlsPanel({
 
       {hasData ? (
         <>
-          <ChartToolbar slide={slide} data={data} onSlideChange={onSlideChange} />
+          <ChartToolbar
+            embedded={embedded}
+            slide={slide}
+            data={data}
+            onSlideChange={onSlideChange}
+          />
           <ChartDataPanel
             slide={slide}
             data={data}

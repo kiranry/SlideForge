@@ -67,7 +67,7 @@ export function SlideFilmstrip({
     <div
       className={
         vertical
-          ? "flex flex-col gap-2"
+          ? "flex flex-col gap-2 pr-0.5"
           : "flex gap-3 overflow-x-auto touch-pan-x pb-2 lg:max-h-[70vh] lg:flex-col lg:overflow-y-auto lg:pr-2"
       }
       aria-label="Slide filmstrip"
