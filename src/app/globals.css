@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm paper & ink editorial base */
+    --background: 40 33% 98%;
+    --foreground: 24 16% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 24 16% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 16% 10%;
+
+    /* Vermilion signal accent — the brand color */
+    --primary: 12 88% 55%;
+    --primary-foreground: 40 33% 98%;
+
+    --secondary: 36 20% 92%;
+    --secondary-foreground: 24 16% 14%;
+
+    --muted: 36 18% 93%;
+    --muted-foreground: 28 8% 42%;
+
+    --accent: 36 24% 90%;
+    --accent-foreground: 24 16% 14%;
+
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 40 33% 98%;
+
+    --border: 30 14% 87%;
+    --input: 30 14% 87%;
+    --ring: 12 88% 55%;
+
+    /* Deck-preview chart palette (app chrome only) */
+    --chart-1: 12 88% 55%;
+    --chart-2: 199 74% 36%;
+    --chart-3: 150 36% 32%;
+    --chart-4: 41 88% 52%;
+    --chart-5: 280 40% 50%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 24 14% 8%;
+    --foreground: 40 24% 94%;
+
+    --card: 24 13% 11%;
+    --card-foreground: 40 24% 94%;
+
+    --popover: 24 13% 11%;
+    --popover-foreground: 40 24% 94%;
+
+    --primary: 12 88% 58%;
+    --primary-foreground: 24 14% 8%;
+
+    --secondary: 24 8% 18%;
+    --secondary-foreground: 40 24% 94%;
+
+    --muted: 24 8% 16%;
+    --muted-foreground: 30 8% 62%;
+
+    --accent: 24 8% 20%;
+    --accent-foreground: 40 24% 94%;
+
+    --destructive: 0 62% 46%;
+    --destructive-foreground: 40 24% 94%;
+
+    --border: 30 8% 20%;
+    --input: 30 8% 22%;
+    --ring: 12 88% 58%;
+
+    --chart-1: 12 88% 58%;
+    --chart-2: 199 70% 52%;
+    --chart-3: 150 40% 48%;
+    --chart-4: 41 88% 58%;
+    --chart-5: 280 44% 64%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv01", "cv03";
+  }
+}
