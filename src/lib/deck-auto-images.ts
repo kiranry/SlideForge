@@ -1,9 +1,5 @@
 import type { Slide, SlideManifest } from "@/lib/types";
-import {
-  buildImagePrompt,
-  MAX_AI_IMAGES_PER_DECK,
-  countAiSlideImages,
-} from "@/lib/slide-images";
+import { buildImagePrompt } from "@/lib/slide-images";
 
 function imagePresetForSlide(slide: Slide): "hero" | "illustration" | "photo" {
   if (slide.layout_hint === "full_bleed" || slide.layout_hint === "hero") return "hero";
@@ -21,18 +17,9 @@ function slidesEligibleForAutoImage(manifest: SlideManifest): Slide[] {
   });
 }
 
-/** Pick up to MAX_AI_IMAGES_PER_DECK slides spread across the deck. */
+/** Slides that can receive an auto-generated image. */
 export function pickSlidesForAutoImages(manifest: SlideManifest): Slide[] {
-  const eligible = slidesEligibleForAutoImage(manifest);
-  if (!eligible.length) return [];
-  if (eligible.length <= MAX_AI_IMAGES_PER_DECK) return eligible;
-
-  const picks: Slide[] = [];
-  const step = Math.ceil(eligible.length / MAX_AI_IMAGES_PER_DECK);
-  for (let i = 0; i < eligible.length && picks.length < MAX_AI_IMAGES_PER_DECK; i += step) {
-    picks.push(eligible[i]);
-  }
-  return picks;
+  return slidesEligibleForAutoImage(manifest);
 }
 
 /**
@@ -47,13 +34,10 @@ export async function enrichManifestWithAutoImages(
   const picks = pickSlidesForAutoImages(manifest);
   if (!picks.length) return manifest;
 
-  let aiCount = countAiSlideImages(manifest);
   const slides = [...manifest.slides];
   const contextPrompt = deckDescription.trim().slice(0, 300);
 
   for (const pick of picks) {
-    if (aiCount >= MAX_AI_IMAGES_PER_DECK) break;
-
     const idx = slides.findIndex((s) => s.index === pick.index);
     if (idx < 0) continue;
 
@@ -75,7 +59,6 @@ export async function enrichManifestWithAutoImages(
           slideTitle: slide.title,
           slideBody: slide.body,
           preset,
-          aiImageCount: aiCount,
         }),
       });
 
@@ -96,7 +79,6 @@ export async function enrichManifestWithAutoImages(
         layout_hint:
           placement === "hero" ? "full_bleed" : slide.layout_hint,
       };
-      aiCount++;
     } catch {
       /* non-fatal */
     }

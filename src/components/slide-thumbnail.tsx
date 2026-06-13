@@ -33,32 +33,33 @@ export const SlideThumbnail = React.memo(function SlideThumbnail({
   onSelect,
 }: SlideThumbnailProps) {
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`relative shrink-0 overflow-hidden rounded-md border-2 transition-colors ${
-        selected
-          ? "border-primary"
-          : "border-border hover:border-muted-foreground/40"
-      }`}
-      style={{ width: 140 }}
-      aria-label={`Slide ${index + 1}`}
-      aria-current={selected ? "true" : undefined}
-    >
-      <SlideCanvas
-        slide={slide}
-        themeId={themeId}
-        data={data}
-        width={140}
-        rtl={rtl}
-        anomalyFlags={anomalyFlags}
-        suppressedAnomalyIds={suppressedAnomalyIds}
-        customPalette={customPalette}
-        logoDataUrl={logoDataUrl}
-      />
-      <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1 text-[10px] text-white">
+    <div className="relative shrink-0" style={{ width: 140 }}>
+      <button
+        type="button"
+        onClick={onSelect}
+        className={`block w-full overflow-hidden rounded-md border-2 transition-colors ${
+          selected
+            ? "border-primary"
+            : "border-border hover:border-muted-foreground/40"
+        }`}
+        aria-label={`Slide ${index + 1}`}
+        aria-current={selected ? "true" : undefined}
+      >
+        <SlideCanvas
+          slide={slide}
+          themeId={themeId}
+          data={data}
+          width={140}
+          rtl={rtl}
+          anomalyFlags={anomalyFlags}
+          suppressedAnomalyIds={suppressedAnomalyIds}
+          customPalette={customPalette}
+          logoDataUrl={logoDataUrl}
+        />
+      </button>
+      <span className="pointer-events-none absolute bottom-1.5 right-1.5 z-10 rounded bg-black/70 px-1.5 py-px text-[10px] font-medium leading-none text-white shadow-sm">
         {index + 1}
       </span>
-    </button>
+    </div>
   );
 });

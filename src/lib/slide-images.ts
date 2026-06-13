@@ -1,11 +1,3 @@
-import type { SlideManifest } from "@/lib/types";
-
-export const MAX_AI_IMAGES_PER_DECK = 3;
-
-export function countAiSlideImages(manifest: SlideManifest): number {
-  return manifest.slides.filter((s) => s.image?.source === "ai").length;
-}
-
 export interface ImagePromptContext {
   title: string;
   body?: string[];
