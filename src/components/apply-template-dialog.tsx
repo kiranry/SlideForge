@@ -7,11 +7,12 @@ import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import {
   FileSpreadsheet,
-  Loader2,
   RefreshCw,
   Upload,
   X,
 } from "lucide-react";
+import { LoadingOverlay, Spinner } from "@/components/ui/spinner";
+import { ActionButton } from "@/components/ui/action-button";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -37,6 +38,7 @@ import type {
   SavedDeckTemplate,
 } from "@/lib/templates/saved-template";
 import type { ParsedData } from "@/lib/types";
+import { useBusyPhase } from "@/lib/use-instant-pending";
 
 const ACCEPT = ".xlsx,.xls,.csv";
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -54,6 +56,7 @@ export function ApplyTemplateDialog({ template }: ApplyTemplateDialogProps) {
     {}
   );
   const [issues, setIssues] = useState<BindingIssue[]>([]);
+  const { busy, start, redirect, reset } = useBusyPhase();
 
   const parseUpload = useMutation({
     mutationFn: async (file: File) => {
@@ -96,15 +99,23 @@ export function ApplyTemplateDialog({ template }: ApplyTemplateDialogProps) {
       return id;
     },
     onSuccess: (id) => {
-      toast.success("Deck generated from template");
+      redirect();
       setOpen(false);
       setData(null);
       setColumnMappings({});
       setIssues([]);
       router.push(`/preview/${id}`);
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => {
+      reset();
+      toast.error(err.message);
+    },
   });
+
+  const startCreateDeck = () => {
+    start();
+    createDeck.mutate();
+  };
 
   const handleMappingChange = (expected: string, actual: string) => {
     setColumnMappings((prev) => ({ ...prev, [expected]: actual }));
@@ -126,7 +137,12 @@ export function ApplyTemplateDialog({ template }: ApplyTemplateDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      <LoadingOverlay
+        open={busy}
+        label={createDeck.isPending ? "Generating deck…" : "Opening preview…"}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> New data
@@ -160,7 +176,7 @@ export function ApplyTemplateDialog({ template }: ApplyTemplateDialogProps) {
             className="flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border px-6 py-8 transition-colors hover:border-primary hover:bg-muted/30"
           >
             {parseUpload.isPending ? (
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Spinner size="lg" className="gap-0" />
             ) : (
               <Upload className="h-8 w-8 text-muted-foreground" />
             )}
@@ -225,20 +241,17 @@ export function ApplyTemplateDialog({ template }: ApplyTemplateDialogProps) {
           </p>
         )}
 
-        <Button
+        <ActionButton
           className="w-full"
-          disabled={!data || createDeck.isPending || issues.length > 0}
-          onClick={() => createDeck.mutate()}
+          disabled={!data || busy || issues.length > 0}
+          loading={busy || createDeck.isPending}
+          loadingText="Generating…"
+          onClick={startCreateDeck}
         >
-          {createDeck.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating…
-            </>
-          ) : (
-            "Generate deck"
-          )}
-        </Button>
+          Generate deck
+        </ActionButton>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

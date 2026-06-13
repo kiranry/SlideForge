@@ -7,7 +7,6 @@ import { saveAs } from "file-saver";
 import { toast } from "sonner";
 import {
   Download,
-  Loader2,
   ArrowLeft,
   FileText,
   Check,
@@ -15,6 +14,8 @@ import {
   FileArchive,
   FileType,
 } from "lucide-react";
+import { ActionButton } from "@/components/ui/action-button";
+import { ExportPanelSkeleton } from "@/components/loading-states";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -197,7 +198,7 @@ export function ExportPanel({ id }: { id: string }) {
   });
 
   if (deck === undefined)
-    return <div className="p-10 text-center text-muted-foreground">Loading…</div>;
+    return <ExportPanelSkeleton />;
   if (deck === null)
     return (
       <div className="p-10 text-center">
@@ -271,17 +272,14 @@ export function ExportPanel({ id }: { id: string }) {
               )}
             </div>
 
-            <Button
+            <ActionButton
               size="lg"
               className="w-full"
+              loading={downloadPptx.isPending}
+              loadingText="Building .pptx…"
               onClick={() => downloadPptx.mutate()}
-              disabled={downloadPptx.isPending}
             >
-              {downloadPptx.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Building .pptx…
-                </>
-              ) : pptxDone ? (
+              {pptxDone ? (
                 <>
                   <Check className="mr-2 h-4 w-4" /> Download again
                 </>
@@ -290,29 +288,22 @@ export function ExportPanel({ id }: { id: string }) {
                   <Download className="mr-2 h-4 w-4" /> Download PowerPoint
                 </>
               )}
-            </Button>
+            </ActionButton>
 
             <div className="flex justify-center">
               <SaveTemplateDialog deck={deck} />
             </div>
 
-            <Button
+            <ActionButton
               size="lg"
               variant="outline"
               className="w-full"
+              loading={downloadBundle.isPending}
+              loadingText="Building zip…"
               onClick={() => downloadBundle.mutate()}
-              disabled={downloadBundle.isPending}
             >
-              {downloadBundle.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Building zip…
-                </>
-              ) : (
-                <>
-                  <FileArchive className="mr-2 h-4 w-4" /> Download bundle (.zip)
-                </>
-              )}
-            </Button>
+              <FileArchive className="mr-2 h-4 w-4" /> Download bundle (.zip)
+            </ActionButton>
 
             <p className="text-center text-xs text-muted-foreground">
               Zip includes .pptx, presenter-script.docx, and source-data.csv
@@ -340,41 +331,27 @@ export function ExportPanel({ id }: { id: string }) {
                   <SelectItem value="grid">Two slides per page (grid)</SelectItem>
                 </SelectContent>
               </Select>
-              <Button
+              <ActionButton
                 variant="outline"
                 className="w-full"
-                disabled={downloadPdf.isPending}
+                loading={downloadPdf.isPending}
+                loadingText="Building PDF…"
                 onClick={() => downloadPdf.mutate()}
               >
-                {downloadPdf.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Building PDF…
-                  </>
-                ) : (
-                  <>
-                    <FileType className="mr-2 h-4 w-4" /> Download PDF handout
-                  </>
-                )}
-              </Button>
+                <FileType className="mr-2 h-4 w-4" /> Download PDF handout
+              </ActionButton>
             </div>
 
-            <Button
+            <ActionButton
               size="lg"
               variant="outline"
               className="w-full"
+              loading={downloadScript.isPending}
+              loadingText="Writing script…"
               onClick={() => downloadScript.mutate()}
-              disabled={downloadScript.isPending}
             >
-              {downloadScript.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Writing script…
-                </>
-              ) : (
-                <>
-                  <Mic className="mr-2 h-4 w-4" /> Download presenter script (AI)
-                </>
-              )}
-            </Button>
+              <Mic className="mr-2 h-4 w-4" /> Download presenter script (AI)
+            </ActionButton>
 
             {deck.data && deck.anomalyFlags && deck.anomalyFlags.length > 0 && (
               <AnomalyPanel

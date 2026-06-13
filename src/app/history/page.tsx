@@ -7,11 +7,12 @@ import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { ListCardsSkeleton } from "@/components/loading-states";
 import { listDecks, deleteDeck } from "@/lib/storage";
 import type { StoredDeck } from "@/lib/types";
 
 export default function HistoryPage() {
-  const [decks, setDecks] = useState<StoredDeck[]>([]);
+  const [decks, setDecks] = useState<StoredDeck[] | null>(null);
 
   useEffect(() => {
     setDecks(listDecks());
@@ -35,7 +36,9 @@ export default function HistoryPage() {
           </p>
         </header>
 
-        {decks.length === 0 ? (
+        {decks === null ? (
+          <ListCardsSkeleton count={4} />
+        ) : decks.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-16 text-center">
             <p className="text-muted-foreground">No decks yet.</p>
             <Button asChild className="mt-4">

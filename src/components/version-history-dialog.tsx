@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { History, Loader2, RotateCcw } from "lucide-react";
+import { History, RotateCcw } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -104,7 +105,7 @@ export function VersionHistoryDialog({
                   onClick={() => handleRestore(v.id)}
                 >
                   {restoring === v.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Spinner size="sm" className="gap-0" />
                   ) : (
                     <RotateCcw className="mr-1 h-3.5 w-3.5" />
                   )}

@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { LoadingOverlay } from "@/components/ui/spinner";
+import { ActionButton } from "@/components/ui/action-button";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -38,6 +40,7 @@ import {
 } from "@/lib/options";
 import { withTiming } from "@/lib/telemetry";
 import { enrichManifestWithAutoImages } from "@/lib/deck-auto-images";
+import { useBusyPhase } from "@/lib/use-instant-pending";
 import type { InputMode, ParsedData, SlideManifest } from "@/lib/types";
 
 const MAX_CHARS = 2000;
@@ -58,13 +61,20 @@ export function BuilderForm() {
   const router = useRouter();
   const store = useBuilderStore();
   const [customCount, setCustomCount] = useState(false);
+  const [statusLabel, setStatusLabel] = useState("Generating deck…");
+  const { busy, start, redirect, reset } = useBusyPhase();
 
   const hasDescription = store.description.trim().length > 0;
   const hasData = !!store.parsedData && store.parsedData.sheets.length > 0;
 
   const generate = useMutation({
+    onMutate: () => {
+      start();
+      setStatusLabel("Preparing…");
+    },
     mutationFn: async (): Promise<{ id: string }> => {
       return withTiming("generate.outline", async () => {
+      setStatusLabel("Outlining slides…");
       const res = await fetch("/api/generate-outline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,6 +104,7 @@ export function BuilderForm() {
         hasChartSlides &&
         store.autoGenerateChartData
       ) {
+        setStatusLabel("Creating chart data…");
         try {
           const dataRes = await fetch("/api/generate-synthetic-data", {
             method: "POST",
@@ -113,16 +124,17 @@ export function BuilderForm() {
       }
 
       if (store.autoGenerateImages) {
+        setStatusLabel("Adding visuals…");
         manifest = await enrichManifestWithAutoImages(
           manifest,
           store.description,
-          (msg) => toast.loading(msg, { id: "auto-images" })
+          (msg) => setStatusLabel(msg)
         );
-        toast.dismiss("auto-images");
       }
 
       // Auto-insert data insight slides when a file was uploaded.
       if (deckData && deckData.sheets.length > 0) {
+        setStatusLabel("Analyzing data…");
         try {
           const insightRes = await fetch("/api/generate-insights", {
             method: "POST",
@@ -142,6 +154,7 @@ export function BuilderForm() {
       const mode = resolveMode(store.mode, hasDescription, hasData);
       const anomalyFlags = deckData ? detectAnomalies(deckData) : undefined;
       store.setManifest(manifest);
+      setStatusLabel("Saving deck…");
       await saveDeck({
         id,
         createdAt: new Date().toISOString(),
@@ -164,13 +177,23 @@ export function BuilderForm() {
       });
     },
     onSuccess: ({ id }) => {
-      toast.success("Deck generated");
+      setStatusLabel("Opening preview…");
+      redirect();
       router.push(`/preview/${id}`);
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => {
+      reset();
+      setStatusLabel("Generating deck…");
+      toast.error(err.message);
+    },
   });
 
+  const startGenerate = () => {
+    generate.mutate();
+  };
+
   const canGenerate =
+    !busy &&
     !generate.isPending &&
     ((store.mode === "description" && hasDescription) ||
       (store.mode === "data" && hasData) ||
@@ -180,7 +203,13 @@ export function BuilderForm() {
   const dataRequired = store.mode === "data";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+    <>
+      <LoadingOverlay open={busy} label={statusLabel} />
+      <div
+        className="grid gap-6 lg:grid-cols-[1fr_320px]"
+        aria-hidden={busy}
+        inert={busy ? true : undefined}
+      >
       <div className="space-y-4">
         <Tabs
           value={store.mode}
@@ -269,24 +298,18 @@ export function BuilderForm() {
           </label>
         </div>
 
-        <Button
+        <ActionButton
           size="lg"
           className="w-full"
           disabled={!canGenerate}
-          onClick={() => generate.mutate()}
+          loading={busy || generate.isPending}
+          loadingText="Generating…"
+          onClick={startGenerate}
         >
-          {generate.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating…
-            </>
-          ) : (
-            <>
-              <Sparkles className="mr-2 h-4 w-4" /> Generate deck
-            </>
-          )}
-        </Button>
+          <Sparkles className="mr-2 h-4 w-4" /> Generate deck
+        </ActionButton>
 
-        {!canGenerate && !generate.isPending && (
+        {!canGenerate && !busy && !generate.isPending && (
           <p className="text-center text-xs text-muted-foreground">
             {dataRequired && !hasData
               ? "Upload a data file to continue."
@@ -449,6 +472,7 @@ export function BuilderForm() {
         <LogoUpload />
       </div>
     </div>
+    </>
   );
 }
 

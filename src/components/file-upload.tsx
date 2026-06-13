@@ -3,7 +3,8 @@
 import { useCallback, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Upload, FileSpreadsheet, X, Loader2 } from "lucide-react";
+import { Upload, FileSpreadsheet, X } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { parseFileClient } from "@/lib/parse-client";
 import { useBuilderStore } from "@/lib/store";
@@ -39,6 +40,7 @@ export function FileUpload() {
   const store = useBuilderStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
@@ -61,11 +63,14 @@ export function FileUpload() {
 
   const handleFile = useCallback(
     (file: File | undefined) => {
-      if (!file || upload.isPending) return;
-      upload.mutate(file);
+      if (!file || upload.isPending || starting) return;
+      setStarting(true);
+      upload.mutate(file, { onSettled: () => setStarting(false) });
     },
-    [upload]
+    [upload, starting]
   );
+
+  const parsing = starting || upload.isPending;
 
   const clear = () => {
     store.setParsedData(null);
@@ -107,11 +112,11 @@ export function FileUpload() {
               : "border-border hover:border-muted-foreground/50 hover:bg-muted/30"
           }`}
         >
-          {upload.isPending ? (
-            <>
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          {parsing ? (
+            <div className="flex flex-col items-center gap-3">
+              <Spinner size="lg" className="gap-0" />
               <p className="text-sm text-muted-foreground">Parsing file…</p>
-            </>
+            </div>
           ) : (
             <>
               <Upload className="h-8 w-8 text-muted-foreground" />

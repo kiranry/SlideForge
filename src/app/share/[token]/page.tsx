@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Layers } from "lucide-react";
 import { ShareViewer } from "@/components/share-viewer";
+import { PageLoading } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import type { ShareRecord } from "@/lib/share-types";
 
@@ -31,11 +32,7 @@ export default function SharePage({ params }: { params: { token: string } }) {
   }, [params.token]);
 
   if (share === undefined) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
-        Loading shared deck…
-      </div>
-    );
+    return <PageLoading label="Loading shared deck…" className="min-h-screen" />;
   }
 
   if (!share || error) {

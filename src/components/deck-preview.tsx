@@ -11,11 +11,12 @@ import {
   Download,
   ArrowLeft,
   Sparkles,
-  Loader2,
   RotateCcw,
   Undo2,
   Redo2,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { DeckPreviewSkeleton } from "@/components/loading-states";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -396,7 +397,7 @@ export function DeckPreview({ id }: { id: string }) {
   });
 
   if (deck === undefined) {
-    return <div className="p-10 text-center text-muted-foreground">Loading…</div>;
+    return <DeckPreviewSkeleton />;
   }
   if (deck === null) {
     return (
@@ -496,7 +497,7 @@ export function DeckPreview({ id }: { id: string }) {
                 title="Add data insights"
               >
                 {generateInsights.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Spinner size="sm" className="gap-0" />
                 ) : (
                   <Sparkles className="h-4 w-4" />
                 )}

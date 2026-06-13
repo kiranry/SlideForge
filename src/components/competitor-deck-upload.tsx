@@ -3,7 +3,8 @@
 import { useCallback, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Presentation, Upload, X, Loader2 } from "lucide-react";
+import { Presentation, Upload, X } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useBuilderStore } from "@/lib/store";
@@ -106,19 +107,23 @@ export function CompetitorDeckUpload() {
           }`}
         >
           {upload.isPending ? (
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <Spinner size="lg" className="gap-0" />
           ) : (
             <Upload className="h-8 w-8 text-muted-foreground" />
           )}
           <p className="mt-2 text-sm text-muted-foreground">
-            Drag a .pptx here or{" "}
-            <button
-              type="button"
-              className="text-primary underline"
-              onClick={() => inputRef.current?.click()}
-            >
-              browse
-            </button>
+            {upload.isPending ? "Analyzing deck structure…" : (
+              <>
+                Drag a .pptx here or{" "}
+                <button
+                  type="button"
+                  className="text-primary underline"
+                  onClick={() => inputRef.current?.click()}
+                >
+                  browse
+                </button>
+              </>
+            )}
           </p>
           <input
             ref={inputRef}

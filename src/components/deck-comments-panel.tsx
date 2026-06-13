@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Check, MessageSquare } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { CommentsSkeleton } from "@/components/loading-states";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +27,7 @@ export function DeckCommentsPanel({
   onCommentsChange,
 }: DeckCommentsPanelProps) {
   const [shareComments, setShareComments] = useState<ShareComment[]>([]);
+  const [shareCommentsLoading, setShareCommentsLoading] = useState(false);
   const [note, setNote] = useState("");
   const localComments = deck.comments ?? [];
 
@@ -35,13 +38,18 @@ export function DeckCommentsPanel({
       return;
     }
     let cancelled = false;
+    setShareCommentsLoading(true);
     (async () => {
       const res = await fetch("/api/share/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tokens }),
       });
-      if (!res.ok || cancelled) return;
+      if (cancelled) return;
+      if (!res.ok) {
+        setShareCommentsLoading(false);
+        return;
+      }
       const { shares } = (await res.json()) as {
         shares: Array<{ token: string; comments: SlideComment[] }>;
       };
@@ -51,7 +59,10 @@ export function DeckCommentsPanel({
           merged.push({ ...c, shareToken: s.token });
         }
       }
-      if (!cancelled) setShareComments(merged);
+      if (!cancelled) {
+        setShareComments(merged);
+        setShareCommentsLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
@@ -127,10 +138,13 @@ export function DeckCommentsPanel({
     );
   };
 
+  const ownerShares = listOwnerShares(deck.id);
+
   if (
     slideLocal.length === 0 &&
     slideShare.length === 0 &&
-    !listOwnerShares(deck.id).length
+    ownerShares.length === 0 &&
+    !shareCommentsLoading
   ) {
     return null;
   }
@@ -143,6 +157,10 @@ export function DeckCommentsPanel({
       </div>
 
       <div className="mb-3 space-y-2">
+        {shareCommentsLoading ? (
+          <CommentsSkeleton />
+        ) : (
+          <>
         {slideShare.map((c) => (
           <div
             key={`${c.shareToken}-${c.id}`}
@@ -169,7 +187,13 @@ export function DeckCommentsPanel({
                     })
                   }
                 >
-                  <Check className="mr-1 h-3 w-3" /> Resolve
+                  {resolveShare.isPending ? (
+                    <Spinner size="sm" className="gap-0" />
+                  ) : (
+                    <>
+                      <Check className="mr-1 h-3 w-3" /> Resolve
+                    </>
+                  )}
                 </Button>
               )}
             </div>
@@ -204,6 +228,8 @@ export function DeckCommentsPanel({
             <p className="mt-1 text-muted-foreground">{c.text}</p>
           </div>
         ))}
+          </>
+        )}
       </div>
 
       <Textarea

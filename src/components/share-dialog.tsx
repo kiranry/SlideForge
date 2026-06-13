@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Link2, Loader2, Trash2 } from "lucide-react";
+import { Copy, Link2, Trash2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -41,6 +42,7 @@ export function ShareDialog({ deckId, compact = false }: ShareDialogProps) {
     () => listOwnerShares(deckId)
   );
   const [lastUrl, setLastUrl] = useState<string | null>(null);
+  const [revokingToken, setRevokingToken] = useState<string | null>(null);
 
   const refreshShares = () => setShares(listOwnerShares(deckId));
 
@@ -99,13 +101,18 @@ export function ShareDialog({ deckId, compact = false }: ShareDialogProps) {
 
   const revoke = useMutation({
     mutationFn: async (token: string) => {
-      const res = await fetch(`/api/share/${token}`, { method: "DELETE" });
-      if (!res.ok) {
-        const { error } = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(error || "Could not revoke link.");
+      setRevokingToken(token);
+      try {
+        const res = await fetch(`/api/share/${token}`, { method: "DELETE" });
+        if (!res.ok) {
+          const { error } = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(error || "Could not revoke link.");
+        }
+        removeOwnerShare(token);
+        refreshShares();
+      } finally {
+        setRevokingToken(null);
       }
-      removeOwnerShare(token);
-      refreshShares();
     },
     onSuccess: () => toast.success("Share link revoked"),
     onError: (err: Error) => toast.error(err.message),
@@ -184,7 +191,7 @@ export function ShareDialog({ deckId, compact = false }: ShareDialogProps) {
           onClick={() => createShare.mutate()}
         >
           {createShare.isPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Spinner size="sm" />
           ) : (
             <Link2 className="mr-2 h-4 w-4" />
           )}
@@ -245,7 +252,11 @@ export function ShareDialog({ deckId, compact = false }: ShareDialogProps) {
                     onClick={() => revoke.mutate(s.token)}
                     aria-label="Revoke link"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    {revokingToken === s.token ? (
+                      <Spinner size="sm" className="gap-0" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
                   </Button>
                 </div>
               </div>

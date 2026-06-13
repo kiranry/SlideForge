@@ -5,12 +5,12 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   BarChart3,
-  Loader2,
   Pencil,
   Sparkles,
   Trash2,
   Upload,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { ChartToolbar } from "@/components/chart-toolbar";
 import { ChartDataPanel } from "@/components/chart-data-panel";
@@ -166,7 +166,7 @@ export function ChartControlsPanel({
         onClick={() => dataInputRef.current?.click()}
       >
         {attachData.isPending ? (
-          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+          <Spinner size="sm" className="gap-0" />
         ) : (
           <Upload className="mr-1.5 h-3.5 w-3.5" />
         )}
@@ -180,7 +180,7 @@ export function ChartControlsPanel({
         onClick={() => generateAiData.mutate()}
       >
         {generateAiData.isPending ? (
-          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+          <Spinner size="sm" className="gap-0" />
         ) : (
           <Sparkles className="mr-1.5 h-3.5 w-3.5" />
         )}
