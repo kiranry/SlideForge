@@ -302,6 +302,11 @@ User input (description ± data file)
 ## Project structure
 
 ```
+docs/
+├── PRD.md                # Product requirements (v1.0)
+├── PLAN.md               # v1 build plan
+├── PLAN-v2.md            # Post-MVP plan
+└── PLAN-v3.md            # Active roadmap
 src/
 ├── app/                  # Next.js App Router pages & API routes
 │   ├── create/           # Builder form
@@ -360,7 +365,7 @@ SlideForge is **local-first**:
 
 - Decks, brand kits, templates, and history live in **your browser** (localStorage + IndexedDB).
 - AI requests send your description and parsed data to the configured provider (Gemini or Anthropic) for generation only.
-- Share links write read-only snapshots to the server's `data/shares/` directory in development; there is no cloud sync or user accounts yet (planned in `PLAN-v3.md`).
+- Share links write read-only snapshots to the server's `data/shares/` directory in development; there is no cloud sync or user accounts yet (planned in [`docs/PLAN-v3.md`](./docs/PLAN-v3.md)).
 
 Do not commit `.env.local` — it contains API keys.
 
@@ -386,9 +391,9 @@ When creating a deck at `/create`:
 
 ## Roadmap
 
-See [`PLAN-v3.md`](./PLAN-v3.md) for the active roadmap: connected data (Google Sheets / CSV URLs), programmatic API, Google Slides export, and cloud sync (Supabase) as a later phase.
+See [`docs/PLAN-v3.md`](./docs/PLAN-v3.md) for the active roadmap: connected data (Google Sheets / CSV URLs), programmatic API, Google Slides export, and cloud sync (Supabase) as a later phase.
 
-Product requirements: [`PRD.md`](./PRD.md).
+Product requirements: [`docs/PRD.md`](./docs/PRD.md).
 
 ---
 
